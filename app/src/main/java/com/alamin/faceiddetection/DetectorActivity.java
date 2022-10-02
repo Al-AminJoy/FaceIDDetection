@@ -31,6 +31,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -65,6 +66,7 @@ import java.util.List;
  */
 public class DetectorActivity extends CameraActivity implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
+  private static final String TAG="DetectorActivity";
 
 
   // FaceNet
@@ -248,8 +250,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                     targetW, targetH,
                     sensorOrientation, MAINTAIN_ASPECT);
 
-
-
     trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
     trackingOverlay.addCallback(
             new OverlayView.DrawCallback() {
@@ -306,6 +306,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                         new Runnable() {
                           @Override
                           public void run() {
+                            Log.d(TAG, "Checking Face Detecting ");
                             onFacesDetected(currTimestamp, faces, addPending);
                             addPending = false;
                           }
@@ -402,6 +403,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           if (name.isEmpty()) {
               return;
           }
+         Log.d(TAG, "Checking Registered ");
           detector.register(name, rec);
           //knownFaces.put(name, rec);
           dlg.dismiss();
@@ -421,7 +423,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
 
     if (mappedRecognitions.size() > 0) {
-       LOGGER.i("Adding results");
+      Log.d(TAG, "Checking Adding Face");
        SimilarityClassifier.Recognition rec = mappedRecognitions.get(0);
        if (rec.getExtra() != null) {
          showAddFaceDialog(rec);
@@ -429,15 +431,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     }
 
-    runOnUiThread(
-            new Runnable() {
-              @Override
-              public void run() {
-                showFrameInfo(previewWidth + "x" + previewHeight);
-                showCropInfo(croppedBitmap.getWidth() + "x" + croppedBitmap.getHeight());
-                showInference(lastProcessingTimeMs + "ms");
-              }
-            });
 
   }
 
@@ -530,6 +523,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
         final long startTime = SystemClock.uptimeMillis();
         final List<SimilarityClassifier.Recognition> resultsAux = detector.recognizeImage(faceBmp, add);
+        Log.d(TAG, "Checking Upcomming Adding Face "+resultsAux.size());
         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
         if (resultsAux.size() > 0) {
@@ -581,6 +575,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         result.setExtra(extra);
         result.setCrop(crop);
         mappedRecognitions.add(result);
+        Log.d(TAG, "Checking Face Verified "+mappedRecognitions.size()+" "+result);
 
       }
 

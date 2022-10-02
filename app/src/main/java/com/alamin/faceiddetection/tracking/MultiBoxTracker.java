@@ -156,7 +156,7 @@ public class MultiBoxTracker {
 
       final String labelString =
               !TextUtils.isEmpty(recognition.title)
-              ? String.format("%s %s", recognition.title, strConfidence)
+              ? String.format("%s ", recognition.title)
               : strConfidence;
 
       borderedText.drawText(
