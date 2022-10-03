@@ -51,4 +51,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@+id/fab_switchcam"
+        app:layout_constraintEnd_toStartOf="@+id/fab_add"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="16dp"
+        android:text="next"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

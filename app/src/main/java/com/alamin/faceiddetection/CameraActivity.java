@@ -87,7 +87,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
-  private FloatingActionButton btnSwitchCam;
+  protected FloatingActionButton btnSwitchCam;
 
   private static final String KEY_USE_FACING = "use_facing";
   private Integer useFacing = null;
@@ -107,15 +107,12 @@ public abstract class CameraActivity extends AppCompatActivity
 
     Intent intent = getIntent();
     //useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_FRONT);
-    useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_BACK);
+    useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_FRONT);
 
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     setContentView(R.layout.tfe_od_activity_camera);
-   /* Toolbar toolbar = findViewById(R.id.toolbar);
-    setSupportActionBar(toolbar);
-    getSupportActionBar().setDisplayShowTitleEnabled(false);
-*/
+
     if (hasPermission()) {
       setFragment();
     } else {
@@ -147,7 +144,7 @@ public abstract class CameraActivity extends AppCompatActivity
     Intent intent = getIntent();
 
     if (useFacing == CameraCharacteristics.LENS_FACING_FRONT) {
-      useFacing = CameraCharacteristics.LENS_FACING_BACK;
+      useFacing = CameraCharacteristics.LENS_FACING_FRONT;
     } else {
       useFacing = CameraCharacteristics.LENS_FACING_FRONT;
     }

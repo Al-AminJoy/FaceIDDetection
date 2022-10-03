@@ -20,6 +20,7 @@
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="face" />
+        <activity android:name=".VerifyActivity"/>
         <activity
             android:name=".DetectorActivity"
             android:exported="true">

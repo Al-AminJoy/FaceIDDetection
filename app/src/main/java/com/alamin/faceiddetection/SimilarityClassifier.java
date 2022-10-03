@@ -17,6 +17,8 @@ package com.alamin.faceiddetection;
 
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public interface SimilarityClassifier {
   void setUseNNAPI(boolean isChecked);
 
   /** An immutable result returned by a Classifier describing what was recognized. */
-  public class Recognition {
+  public class Recognition implements Parcelable {
     /**
      * A unique identifier for what has been recognized. Specific to the class, not the instance of
      * the object.
@@ -69,6 +71,35 @@ public interface SimilarityClassifier {
       this.extra = null;
       this.crop = null;
     }
+
+    protected Recognition(Parcel in) {
+      id = in.readString();
+      title = in.readString();
+      if (in.readByte() == 0) {
+        distance = null;
+      } else {
+        distance = in.readFloat();
+      }
+      location = in.readParcelable(RectF.class.getClassLoader());
+      if (in.readByte() == 0) {
+        color = null;
+      } else {
+        color = in.readInt();
+      }
+      crop = in.readParcelable(Bitmap.class.getClassLoader());
+    }
+
+    public static final Creator<Recognition> CREATOR = new Creator<Recognition>() {
+      @Override
+      public Recognition createFromParcel(Parcel in) {
+        return new Recognition(in);
+      }
+
+      @Override
+      public Recognition[] newArray(int size) {
+        return new Recognition[size];
+      }
+    };
 
     public void setExtra(Object extra) {
         this.extra = extra;
@@ -133,6 +164,31 @@ public interface SimilarityClassifier {
 
     public Bitmap getCrop() {
       return this.crop;
+    }
+
+    @Override
+    public int describeContents() {
+      return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+      parcel.writeString(id);
+      parcel.writeString(title);
+      if (distance == null) {
+        parcel.writeByte((byte) 0);
+      } else {
+        parcel.writeByte((byte) 1);
+        parcel.writeFloat(distance);
+      }
+      parcel.writeParcelable(location, i);
+      if (color == null) {
+        parcel.writeByte((byte) 0);
+      } else {
+        parcel.writeByte((byte) 1);
+        parcel.writeInt(color);
+      }
+      parcel.writeParcelable(crop, i);
     }
   }
 }
