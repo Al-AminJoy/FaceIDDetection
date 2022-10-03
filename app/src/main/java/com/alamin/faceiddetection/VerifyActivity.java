@@ -48,6 +48,7 @@ import com.alamin.faceiddetection.env.ImageUtils;
 import com.alamin.faceiddetection.env.Logger;
 import com.alamin.faceiddetection.tracking.MultiBoxTracker;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -127,22 +128,20 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
   // here the face is cropped and drawn
   private Bitmap faceBmp = null;
 
-  private Bitmap dataBitmap;
-  private String dataName;
-
+  private FloatingActionButton btnAdd;
+  private MaterialButton btnNext;
   //private HashMap<String, Classifier.Recognition> knownFaces = new HashMap<>();
 
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    btnSwitchCam.setVisibility(View.GONE);
+    btnAdd = findViewById(R.id.fab_add);
+    btnNext = findViewById(R.id.btn_next);
 
-    /*dataName = getIntent().getStringExtra("DATA_NAME");
-    byte[] byteArray = getIntent().getByteArrayExtra("REC");
-    dataBitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);*/
+    btnAdd.setVisibility(View.GONE);
+    btnNext.setVisibility(View.GONE);
 
-    Log.d(TAG, "RECOGNITION_MODEL "+Constants.faceDataList.size());
     // Real-time contour detection of multiple faces
     FaceDetectorOptions options =
             new FaceDetectorOptions.Builder()
@@ -280,7 +279,7 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
               @Override
               public void onSuccess(List<Face> faces) {
                 if (faces.size() == 0) {
-                  updateResults(currTimestamp, new LinkedList<>(),false);
+                  updateResults(currTimestamp, new LinkedList<>());
                   return;
                 }
                 runInBackground(
@@ -359,25 +358,19 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
 
 
 
-  private void updateResults(long currTimestamp, final List<SimilarityClassifier.Recognition> mappedRecognitions,boolean hasFace) {
+  private void updateResults(long currTimestamp, final List<SimilarityClassifier.Recognition> mappedRecognitions) {
 
     tracker.trackResults(mappedRecognitions, currTimestamp);
     trackingOverlay.postInvalidate();
     computingDetection = false;
 
-
-    if (isFirst && hasFace){
-      if (mappedRecognitions.size() > 0) {
-        SimilarityClassifier.Recognition rec = mappedRecognitions.get(0);
-        similarityClassifier.register(dataName,rec);
-        Log.d(TAG, "INSERTED_DATA");
-        isFirst = false;
-      }
-    }
-
   }
 
   private void onFacesDetected(long currTimestamp, List<Face> faces, boolean add) {
+    if (isFirst){
+      onFacesRegister(Constants.faceDataList);
+      isFirst = false;
+    }
     cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
     final Canvas canvas = new Canvas(cropCopyBitmap);
     final Paint paint = new Paint();
@@ -395,8 +388,6 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
     final List<SimilarityClassifier.Recognition> mappedRecognitions =
             new LinkedList<SimilarityClassifier.Recognition>();
 
-
-    //final List<Classifier.Recognition> results = new ArrayList<>();
 
     // Note this can be done only once
     int sourceW = rgbFrameBitmap.getWidth();
@@ -416,13 +407,8 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
 
     final Canvas cvFace = new Canvas(faceBmp);
 
-    boolean saved = false;
 
     for (Face face : faces) {
-
-      LOGGER.i("FACE" + face.toString());
-      LOGGER.i("Running detection on face " + currTimestamp);
-      //results = detector.recognizeImage(croppedBitmap);
 
       final RectF boundingBox = new RectF(face.getBoundingBox());
 
@@ -453,25 +439,11 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
         float confidence = -1f;
         Integer color = Color.BLUE;
         Object extra = null;
-        Bitmap crop = null;
 
-        if (add) {
-          crop = Bitmap.createBitmap(portraitBmp,
-                            (int) faceBB.left,
-                            (int) faceBB.top,
-                            (int) faceBB.width(),
-                            (int) faceBB.height());
-        }
+
 
         final long startTime = SystemClock.uptimeMillis();
-         List<SimilarityClassifier.Recognition> resultsAux ;
-
-        /*if (isFirst){
-          resultsAux = similarityClassifier.recognizeImage(dataBitmap, true);
-        }else {
-          resultsAux = similarityClassifier.recognizeImage(faceBmp, add);
-        }*/
-        resultsAux = similarityClassifier.recognizeImage(faceBmp, add);
+         List<SimilarityClassifier.Recognition>  resultsAux = similarityClassifier.recognizeImage(faceBmp, add);
 
         //Log.d(TAG, "Checking Upcomming Adding Face "+resultsAux.size());
         lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
@@ -481,10 +453,6 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
           SimilarityClassifier.Recognition result = resultsAux.get(0);
 
           extra = result.getExtra();
-//          Object extra = result.getExtra();
-//          if (extra != null) {
-//            LOGGER.i("embeeding retrieved " + extra.toString());
-//          }
 
           float conf = result.getDistance();
           if (conf < 1.0f) {
@@ -514,7 +482,6 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
           }
           //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
           flip.mapRect(boundingBox);
-
         }
 
         final SimilarityClassifier.Recognition result = new SimilarityClassifier.Recognition(
@@ -523,18 +490,28 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
         result.setColor(color);
         result.setLocation(boundingBox);
         result.setExtra(extra);
-        result.setCrop(crop);
         mappedRecognitions.add(result);
         Log.d(TAG, "Checking Face Verified "+mappedRecognitions.size()+" "+result);
-
       }
-
-
     }
-
-    updateResults(currTimestamp, mappedRecognitions,true);
-
+    updateResults(currTimestamp, mappedRecognitions);
   }
 
+
+  private void onFacesRegister(List<FaceData> faceDataList) {
+    float confidence = -1f;
+    for (FaceData data: faceDataList){
+      similarityClassifier.recognizeImage(data.getImage(), true);
+      final SimilarityClassifier.Recognition result = new SimilarityClassifier.Recognition(
+              "0", "", confidence , data.getSimilarity().getLocation());
+      result.setColor(data.getSimilarity().getColor());
+      result.setLocation(data.getSimilarity().getLocation());
+      result.setExtra(data.getSimilarity().getExtra());
+      result.setCrop(data.getSimilarity().getCrop());
+      similarityClassifier.register(data.getName(),result);
+       Log.d(TAG, "FACE_REGISTER"+" "+result);
+    }
+
+  }
 
 }

@@ -416,19 +416,10 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           if (name.isEmpty()) {
               return;
           }
-        /*ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        dataBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        byte[] byteArray = stream.toByteArray();*/
 
-        FaceData faceData = new FaceData(name,dataBitmap);
+        FaceData faceData = new FaceData(name,dataBitmap,rec);
         dataList.add(faceData);
-
-       /* Intent intent = new Intent(DetectorActivity.this,VerifyActivity.class);
-        intent.putExtra("REC",byteArray);
-        intent.putExtra("DATA_NAME",name);
-        startActivity(intent);*/
-          //knownFaces.put(name, rec);
-          dlg.dismiss();
+        dlg.dismiss();
       }
     });
     builder.setView(dialogLayout);

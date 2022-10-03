@@ -87,7 +87,6 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
-  protected FloatingActionButton btnSwitchCam;
 
   private static final String KEY_USE_FACING = "use_facing";
   private Integer useFacing = null;
@@ -118,18 +117,6 @@ public abstract class CameraActivity extends AppCompatActivity
     } else {
       requestPermission();
     }
-
-
-
-    btnSwitchCam = findViewById(R.id.fab_switchcam);
-
-
-    btnSwitchCam.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        onSwitchCamClick();
-      }
-    });
 
   }
 
