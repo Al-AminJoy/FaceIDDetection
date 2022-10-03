@@ -258,12 +258,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     frameToCropTransform.invert(cropToFrameTransform);
 
 
-    Matrix frameToPortraitTransform =
-            ImageUtils.getTransformationMatrix(
-                    previewWidth, previewHeight,
-                    targetW, targetH,
-                    sensorOrientation, MAINTAIN_ASPECT);
-
     trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
     trackingOverlay.addCallback(
             new OverlayView.DrawCallback() {
