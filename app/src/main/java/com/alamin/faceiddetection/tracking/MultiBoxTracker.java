@@ -154,6 +154,10 @@ public class MultiBoxTracker {
                       ? ""
                       : String.format("%.2f", (recognition.detectionConfidence)) + "";
 
+     /* final String labelString =
+              !TextUtils.isEmpty(recognition.title)
+              ? String.format("%s %s ", recognition.title,strConfidence)
+              : strConfidence;*/
       final String labelString =
               !TextUtils.isEmpty(recognition.title)
               ? String.format("%s ", recognition.title)

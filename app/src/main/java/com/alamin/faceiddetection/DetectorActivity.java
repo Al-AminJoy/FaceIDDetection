@@ -57,13 +57,10 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import kotlin.UByteArray;
 
 /**
  * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
@@ -166,7 +163,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             new FaceDetectorOptions.Builder()
                     .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                     .setContourMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                     .build();
 
 
@@ -307,7 +304,12 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               @Override
               public void onSuccess(List<Face> faces) {
                 if (faces.size() == 0) {
-                  updateResults(currTimestamp, new LinkedList<>(),null);
+                  lastBlink = 0f;
+                  currentBlink = 0f;
+                  currentTurn = 0f;
+                  firstTurn = 0f;
+                  isFirst = true;
+                  updateResults(currTimestamp, new LinkedList<>(),null, null);
                   return;
                 }
                 runInBackground(
@@ -321,7 +323,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               }
 
             });
-
 
   }
 
@@ -389,7 +390,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   }
 
-  private void showAddFaceDialog(SimilarityClassifier.Recognition rec, Bitmap dataBitmap) {
+  private void showAddFaceDialog(SimilarityClassifier.Recognition rec, Bitmap dataBitmap, EyeOpenProbability eyeOpenProbability) {
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     LayoutInflater inflater = getLayoutInflater();
@@ -421,7 +422,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   }
 
-  private void updateResults(long currTimestamp, final List<SimilarityClassifier.Recognition> mappedRecognitions,Bitmap dataBitmap) {
+  private void updateResults(long currTimestamp, final List<SimilarityClassifier.Recognition> mappedRecognitions, Bitmap dataBitmap, EyeOpenProbability eyeOpenProbability) {
 
     tracker.trackResults(mappedRecognitions, currTimestamp);
     trackingOverlay.postInvalidate();
@@ -431,15 +432,21 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     if (mappedRecognitions.size() > 0) {
        SimilarityClassifier.Recognition rec = mappedRecognitions.get(0);
-       if (rec.getExtra() != null && dataBitmap!=null) {
-         showAddFaceDialog(rec,dataBitmap);
+       if (rec.getExtra() != null && dataBitmap!=null && eyeOpenProbability!=null) {
+         showAddFaceDialog(rec,dataBitmap,eyeOpenProbability);
        }
 
     }
 
 
   }
-
+  float previousLeft = 0f;
+  float previousRight = 0f;
+  float lastBlink = 0f;
+  float currentBlink = 0f;
+  float currentTurn = 0f;
+  float firstTurn = 0f;
+  boolean isFirst = true;
   private void onFacesDetected(long currTimestamp, List<Face> faces, boolean add) {
 
     cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
@@ -483,106 +490,197 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     boolean saved = false;
     Bitmap dataBitmap = null;
 
+    EyeOpenProbability eyeOpenProbability = null;
+
+
     for (Face face : faces) {
 
-      final RectF boundingBox = new RectF(face.getBoundingBox());
+ if (face.getHeadEulerAngleY() > 20 || face.getHeadEulerAngleY() < -20){
+        Log.d(TAG, "onFacesCompare:Out of Range");
+      } else {
 
-      //final boolean goodConfidence = result.getConfidence() >= minimumConfidence;
-      final boolean goodConfidence = true; //face.get;
-      if (boundingBox != null && goodConfidence) {
 
-        // maps crop coordinates to original
-        cropToFrameTransform.mapRect(boundingBox);
 
-        // maps original coordinates to portrait coordinates
-        RectF faceBB = new RectF(boundingBox);
-        transform.mapRect(faceBB);
-
-        // translates portrait to origin and scales to fit input inference size
-        //cv.drawRect(faceBB, paint);
-        float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
-        float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
-        Matrix matrix = new Matrix();
-        matrix.postTranslate(-faceBB.left, -faceBB.top);
-        matrix.postScale(sx, sy);
-
-        cvFace.drawBitmap(portraitBmp, matrix, null);
-
-        //canvas.drawRect(faceBB, paint);
-
-        String label = "";
-        float confidence = -1f;
-        Integer color = Color.BLUE;
-        Object extra = null;
-        Bitmap crop = null;
-
-        if (add) {
-          crop = Bitmap.createBitmap(portraitBmp,
-                            (int) faceBB.left,
-                            (int) faceBB.top,
-                            (int) faceBB.width(),
-                            (int) faceBB.height());
+/*        if (isFirst){
+          currentTurn = 0;
+          firstTurn = 0;
+          isFirst = false;
+        }else {
+          currentTurn = face.getHeadEulerAngleY();
+          //previousTurn = previousTurn;
         }
 
-        final long startTime = SystemClock.uptimeMillis();
-        dataBitmap = faceBmp;
-        final List<SimilarityClassifier.Recognition> resultsAux = detector.recognizeImage(faceBmp, add);
-        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+        Log.d(TAG, "onFacesDetected: First_FACE "+firstTurn);
+        // Log.d(TAG, "onFacesCompare: First "+firstTurn+" Last "+currentTurn);
 
-        if (resultsAux.size() > 0) {
+        if (currentTurn >= 0 ){
+          //Log.d(TAG, "onFacesCompare: Turn Diff "+(currentTurn-firstTurn));
+          if (firstTurn >= 0){
+            if(currentTurn-firstTurn <= 6){
+              Log.d(TAG, "onFacesCompare: Not Human 11");
 
-          SimilarityClassifier.Recognition result = resultsAux.get(0);
+            }else {
+              //Guessed Human,check blinking or not
+              currentBlink = face.getLeftEyeOpenProbability();
+              if (currentBlink != lastBlink){
+                Log.d(TAG, "onFacesCompare: Human 11 "+(currentTurn-firstTurn));
+              }
+            }
+          }else {
+            if(currentTurn+firstTurn <= 6){
+              Log.d(TAG, "onFacesCompare: Not Human 12");
 
-          extra = result.getExtra();
+            }else {
+              //Guessed Human,check blinking or not
+              currentBlink = face.getLeftEyeOpenProbability();
+              if (currentBlink != lastBlink){
+                Log.d(TAG, "onFacesCompare: Human 12 "+(currentTurn-firstTurn));
+              }
+            }
+          }
+
+
+        }else {
+          if (firstTurn >= 0){
+            if ( currentTurn+firstTurn >= -6 ){
+              //Guess Not Human, check blinking or not
+              Log.d(TAG, "onFacesCompare: Not Human 21");
+
+            }else {
+              //Guessed Human,check blinking or not
+              currentBlink = face.getLeftEyeOpenProbability();
+              if (currentBlink != lastBlink){
+                Log.d(TAG, "onFacesCompare: Human 21 "+(currentTurn+firstTurn)+" First Turn "+firstTurn+" Current Turn "+currentTurn);
+              }
+            }
+          }else {
+            if ( currentTurn-firstTurn >= -6 ){
+              //Guess Not Human, check blinking or not
+              Log.d(TAG, "onFacesCompare: Not Human 22");
+
+            }else {
+              //Guessed Human,check blinking or not
+              currentBlink = face.getLeftEyeOpenProbability();
+              if (currentBlink != lastBlink){
+                Log.d(TAG, "onFacesCompare: Human 22 "+(currentTurn-firstTurn)+" First Turn "+firstTurn+" Current Turn "+currentTurn);
+              }
+            }
+          }
+
+        }
+
+        lastBlink = face.getLeftEyeOpenProbability();*/
+
+        final RectF boundingBox = new RectF(face.getBoundingBox());
+
+        float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
+        float rotZ = face.getHeadEulerAngleZ();
+
+
+        // If contour detection was enabled:
+        //Log.d(TAG, "onFacesDetected: Smile Prob: Left Eye "+face.getLeftEyeOpenProbability()+" Right Eye "+face.getRightEyeOpenProbability());
+        eyeOpenProbability = new EyeOpenProbability(face.getLeftEyeOpenProbability(),face.getRightEyeOpenProbability());
+
+        //final boolean goodConfidence = result.getConfidence() >= minimumConfidence;
+        final boolean goodConfidence = true; //face.get;
+        if (boundingBox != null && goodConfidence) {
+
+          // maps crop coordinates to original
+          cropToFrameTransform.mapRect(boundingBox);
+
+          // maps original coordinates to portrait coordinates
+          RectF faceBB = new RectF(boundingBox);
+          transform.mapRect(faceBB);
+
+          // translates portrait to origin and scales to fit input inference size
+          //cv.drawRect(faceBB, paint);
+          float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
+          float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
+          Matrix matrix = new Matrix();
+          matrix.postTranslate(-faceBB.left, -faceBB.top);
+          matrix.postScale(sx, sy);
+
+          cvFace.drawBitmap(portraitBmp, matrix, null);
+
+          //canvas.drawRect(faceBB, paint);
+
+          String label = "";
+          float confidence = -1f;
+          Integer color = Color.BLUE;
+          Object extra = null;
+          Bitmap crop = null;
+
+          if (add) {
+            crop = Bitmap.createBitmap(portraitBmp,
+                    (int) faceBB.left,
+                    (int) faceBB.top,
+                    (int) faceBB.width(),
+                    (int) faceBB.height());
+          }
+
+          final long startTime = SystemClock.uptimeMillis();
+          dataBitmap = faceBmp;
+          Log.d(TAG, "onFacesDetected: rotY "+rotY+" rotZ "+rotZ +" Brightness "+calculateBrightness(faceBmp));
+
+          final List<SimilarityClassifier.Recognition> resultsAux = detector.recognizeImage(faceBmp, add);
+          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+          if (resultsAux.size() > 0) {
+
+            SimilarityClassifier.Recognition result = resultsAux.get(0);
+
+            extra = result.getExtra();
 //          Object extra = result.getExtra();
 //          if (extra != null) {
 //            LOGGER.i("embeeding retrieved " + extra.toString());
 //          }
 
-          float conf = result.getDistance();
-          if (conf < 1.0f) {
+            float conf = result.getDistance();
+            if (conf < 1.0f) {
 
-            confidence = conf;
-            label = result.getTitle();
-            if (result.getId().equals("0")) {
-              color = Color.YELLOW;
+              confidence = conf;
+              label = result.getTitle();
+              if (result.getId().equals("0")) {
+                color = Color.YELLOW;
+              }
+              else {
+                color = Color.RED;
+              }
+            }
+
+          }
+
+
+          if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
+
+            // camera is frontal so the image is flipped horizontally
+            // flips horizontally
+            Matrix flip = new Matrix();
+            if (sensorOrientation == 90 || sensorOrientation == 270) {
+              flip.postScale(1, -1, previewWidth / 2.0f, previewHeight / 2.0f);
             }
             else {
-              color = Color.RED;
+              flip.postScale(-1, 1, previewWidth / 2.0f, previewHeight / 2.0f);
             }
+            //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
+            flip.mapRect(boundingBox);
+
           }
+
+          final SimilarityClassifier.Recognition result = new SimilarityClassifier.Recognition(
+                  "0", label, confidence, boundingBox);
+
+          result.setColor(color);
+          result.setLocation(boundingBox);
+          result.setExtra(extra);
+          result.setCrop(crop);
+          mappedRecognitions.add(result);
+          //Log.d(TAG, "FACE_RESULTS "+result);
 
         }
 
-
-        if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
-
-          // camera is frontal so the image is flipped horizontally
-          // flips horizontally
-          Matrix flip = new Matrix();
-          if (sensorOrientation == 90 || sensorOrientation == 270) {
-            flip.postScale(1, -1, previewWidth / 2.0f, previewHeight / 2.0f);
-          }
-          else {
-            flip.postScale(-1, 1, previewWidth / 2.0f, previewHeight / 2.0f);
-          }
-          //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
-          flip.mapRect(boundingBox);
-
-        }
-
-        final SimilarityClassifier.Recognition result = new SimilarityClassifier.Recognition(
-                "0", label, confidence, boundingBox);
-
-        result.setColor(color);
-        result.setLocation(boundingBox);
-        result.setExtra(extra);
-        result.setCrop(crop);
-        mappedRecognitions.add(result);
-        Log.d(TAG, "Checking Face Verified "+mappedRecognitions.size()+" "+result);
 
       }
-
 
     }
 
@@ -590,10 +688,32 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 //      lastSaved = System.currentTimeMillis();
 //    }
 
-    updateResults(currTimestamp, mappedRecognitions,dataBitmap);
+    updateResults(currTimestamp, mappedRecognitions,dataBitmap, eyeOpenProbability);
 
 
   }
 
+  
+
+  public int calculateBrightnessEstimate(android.graphics.Bitmap bitmap, int pixelSpacing) {
+    int R = 0; int G = 0; int B = 0;
+    int height = bitmap.getHeight();
+    int width = bitmap.getWidth();
+    int n = 0;
+    int[] pixels = new int[width * height];
+    bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+    for (int i = 0; i < pixels.length; i += pixelSpacing) {
+      int color = pixels[i];
+      R += Color.red(color);
+      G += Color.green(color);
+      B += Color.blue(color);
+      n++;
+    }
+    return (R + B + G) / (n * 3);
+  }
+
+  public int calculateBrightness(android.graphics.Bitmap bitmap) {
+    return calculateBrightnessEstimate(bitmap, 1);
+  }
 
 }

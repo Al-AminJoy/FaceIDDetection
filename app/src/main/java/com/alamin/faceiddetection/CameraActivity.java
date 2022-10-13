@@ -294,6 +294,7 @@ public abstract class CameraActivity extends AppCompatActivity
     handler = new Handler(handlerThread.getLooper());
   }
 
+
   @Override
   public synchronized void onPause() {
     LOGGER.d("onPause " + this);

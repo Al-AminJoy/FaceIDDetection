@@ -147,7 +147,7 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
             new FaceDetectorOptions.Builder()
                     .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                     .setContourMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                     .build();
 
 
@@ -408,7 +408,10 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
     final Canvas cvFace = new Canvas(faceBmp);
 
 
+
+
     for (Face face : faces) {
+
 
       final RectF boundingBox = new RectF(face.getBoundingBox());
 
@@ -484,13 +487,37 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
           flip.mapRect(boundingBox);
         }
 
-        final SimilarityClassifier.Recognition result = new SimilarityClassifier.Recognition(
-                "0", label, confidence, boundingBox);
+        SimilarityClassifier.Recognition result;
 
-        result.setColor(color);
+        Log.d(TAG, "onConfidence: "+confidence+" "+label);
+
+        if (confidence <= 0.40){
+          if (label.trim().isEmpty()){
+            result = new SimilarityClassifier.Recognition(
+                    "0", "Not Matched", confidence, boundingBox);
+            result.setColor(Color.RED);
+          }else if(confidence <= 0.35){
+            result = new SimilarityClassifier.Recognition(
+                    "0", label, confidence, boundingBox);
+            result.setColor(Color.GREEN);
+          }else {
+            result = new SimilarityClassifier.Recognition(
+                    "0", "Real", confidence, boundingBox);
+            result.setColor(Color.GREEN);
+          }
+        }else {
+          result = new SimilarityClassifier.Recognition(
+                  "0", "Fake", confidence, boundingBox);
+          result.setColor(Color.RED);
+        }
+
         result.setLocation(boundingBox);
         result.setExtra(extra);
         mappedRecognitions.add(result);
+
+
+
+
         Log.d(TAG, "Checking Face Verified "+mappedRecognitions.size()+" "+result);
       }
     }
@@ -509,7 +536,7 @@ public class VerifyActivity extends CameraActivity implements OnImageAvailableLi
       result.setExtra(data.getSimilarity().getExtra());
       result.setCrop(data.getSimilarity().getCrop());
       similarityClassifier.register(data.getName(),result);
-       Log.d(TAG, "FACE_REGISTER"+" "+result);
+       Log.d(TAG, "FACE_REGISTER"+" "+data.getSimilarity());
     }
 
   }
