@@ -1,4 +1,4 @@
-package com.alamin.faceiddetection
+package com.alamin.faceiddetection.model
 
 import android.graphics.Bitmap
 

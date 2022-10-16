@@ -23,7 +23,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 
-import com.alamin.faceiddetection.SimilarityClassifier;
+import com.alamin.faceiddetection.model.SimilarityClassifier;
 
 
 import java.util.List;

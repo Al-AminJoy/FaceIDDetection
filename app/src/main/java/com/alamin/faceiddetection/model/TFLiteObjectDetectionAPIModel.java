@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package com.alamin.faceiddetection;
+package com.alamin.faceiddetection.model;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -23,8 +23,7 @@ import android.os.Trace;
 import android.util.Pair;
 
 
-
-import com.alamin.faceiddetection.env.Logger;
+import com.alamin.faceiddetection.utils.Logger;
 
 
 import org.tensorflow.lite.Interpreter;

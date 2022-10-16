@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alamin.faceiddetection;
+package com.alamin.faceiddetection.activity;
 
 import android.Manifest;
 import android.app.Fragment;
@@ -38,24 +38,17 @@ import android.os.Trace;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
-import androidx.appcompat.widget.Toolbar;
 
-import com.alamin.faceiddetection.env.ImageUtils;
-import com.alamin.faceiddetection.env.Logger;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
+import com.alamin.faceiddetection.fragment.CameraConnectionFragment;
+import com.alamin.faceiddetection.fragment.LegacyCameraConnectionFragment;
+import com.alamin.faceiddetection.R;
+import com.alamin.faceiddetection.utils.ImageUtils;
+import com.alamin.faceiddetection.utils.Logger;
 
 
 import java.nio.ByteBuffer;

@@ -1,4 +1,4 @@
-package com.alamin.faceiddetection;
+package com.alamin.faceiddetection.fragment;
 
 /*
  * Copyright 2019 The TensorFlow Authors. All Rights Reserved.
@@ -32,9 +32,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 
+import com.alamin.faceiddetection.R;
 import com.alamin.faceiddetection.customview.AutoFitTextureView;
-import com.alamin.faceiddetection.env.ImageUtils;
-import com.alamin.faceiddetection.env.Logger;
+import com.alamin.faceiddetection.utils.ImageUtils;
+import com.alamin.faceiddetection.utils.Logger;
 
 import java.io.IOException;
 import java.util.List;

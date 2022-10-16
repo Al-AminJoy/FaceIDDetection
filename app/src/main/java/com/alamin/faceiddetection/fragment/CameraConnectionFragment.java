@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alamin.faceiddetection;
+package com.alamin.faceiddetection.fragment;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -58,8 +58,9 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import com.alamin.faceiddetection.R;
 import com.alamin.faceiddetection.customview.AutoFitTextureView;
-import com.alamin.faceiddetection.env.Logger;
+import com.alamin.faceiddetection.utils.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -16,7 +16,7 @@ limitations under the License.
 package com.alamin.faceiddetection.customview;
 
 
-import com.alamin.faceiddetection.SimilarityClassifier;
+import com.alamin.faceiddetection.model.SimilarityClassifier;
 
 import java.util.List;
 

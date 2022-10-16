@@ -29,10 +29,10 @@ import android.text.TextUtils;
 import android.util.Pair;
 import android.util.TypedValue;
 
-import com.alamin.faceiddetection.SimilarityClassifier;
-import com.alamin.faceiddetection.env.BorderedText;
-import com.alamin.faceiddetection.env.ImageUtils;
-import com.alamin.faceiddetection.env.Logger;
+import com.alamin.faceiddetection.model.SimilarityClassifier;
+import com.alamin.faceiddetection.utils.BorderedText;
+import com.alamin.faceiddetection.utils.ImageUtils;
+import com.alamin.faceiddetection.utils.Logger;
 
 
 import java.util.LinkedList;
